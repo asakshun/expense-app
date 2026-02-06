@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function Home() {
+function RedirectComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -28,5 +28,20 @@ export default function Home() {
         <p className="mt-4 text-gray-600 dark:text-gray-400">リダイレクト中...</p>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <RedirectComponent />
+    </Suspense>
   );
 }
