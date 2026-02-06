@@ -65,10 +65,18 @@ export default function LIFFPage() {
         const response = await fetch('/api/liff/summary');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch summary');
+          // 詳細なエラー情報を取得
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          });
+          throw new Error(`Failed to fetch summary: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
+        console.log('Summary data:', data);
         setSummary(data);
         
         // Extract start day from period (simple heuristic)
@@ -78,7 +86,7 @@ export default function LIFFPage() {
         setStartDay(day === 25 ? 25 : 1);
       } catch (err) {
         console.error('Failed to fetch summary:', err);
-        setError('データの読み込みに失敗しました。');
+        setError(`データの読み込みに失敗しました。\n${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setLoading(false);
       }

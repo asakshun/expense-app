@@ -21,11 +21,10 @@ export class NotionSettingsGateway implements SettingsRepository {
    */
   async get(): Promise<Settings> {
     const response = await this.withRetry(async () => {
-      // @ts-ignore - query method exists at runtime but may not be in type definitions
       return await this.client.databases.query({
         database_id: this.databaseId,
         filter: {
-          property: '設定名',
+          property: '名前',
           title: {
             equals: this.settingsName,
           },
@@ -50,11 +49,10 @@ export class NotionSettingsGateway implements SettingsRepository {
   async save(settings: Settings): Promise<void> {
     // 既存の設定ページを検索
     const response = await this.withRetry(async () => {
-      // @ts-ignore - query method exists at runtime but may not be in type definitions
       return await this.client.databases.query({
         database_id: this.databaseId,
         filter: {
-          property: '設定名',
+          property: '名前',
           title: {
             equals: this.settingsName,
           },
@@ -69,7 +67,7 @@ export class NotionSettingsGateway implements SettingsRepository {
         await this.client.pages.update({
           page_id: pageId,
           properties: {
-            '値': {
+            'startDay': {
               number: settings.getStartDay(),
             },
           },
@@ -81,7 +79,7 @@ export class NotionSettingsGateway implements SettingsRepository {
         await this.client.pages.create({
           parent: { database_id: this.databaseId },
           properties: {
-            '設定名': {
+            '名前': {
               title: [
                 {
                   text: {
@@ -90,7 +88,7 @@ export class NotionSettingsGateway implements SettingsRepository {
                 },
               ],
             },
-            '値': {
+            'startDay': {
               number: settings.getStartDay(),
             },
           },
@@ -105,10 +103,10 @@ export class NotionSettingsGateway implements SettingsRepository {
   private pageToSettings(page: any): Settings {
     const id = page.id;
     
-    // 値プロパティの取得
-    const valueProperty = page.properties['値'];
+    // startDayプロパティの取得
+    const valueProperty = page.properties['startDay'];
     if (valueProperty?.type !== 'number' || typeof valueProperty.number !== 'number') {
-      throw new Error('Invalid value property in settings');
+      throw new Error('Invalid startDay property in settings');
     }
     
     const startDay = valueProperty.number as StartDay;

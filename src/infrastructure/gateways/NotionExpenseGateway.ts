@@ -43,7 +43,6 @@ export class NotionExpenseGateway implements ExpenseRepository {
    */
   async findByPeriod(period: Period): Promise<Expense[]> {
     const response = await this.withRetry(async () => {
-      // @ts-ignore - query method exists at runtime but may not be in type definitions
       return await this.client.databases.query({
         database_id: this.databaseId,
         filter: {
