@@ -1,0 +1,3 @@
+# Domain Layer (Entities)
+# Contains business rules and domain logic
+# Independent from external frameworks and databases

@@ -1,0 +1,3 @@
+# Presentation Layer (Controllers/Presenters)
+# Handles HTTP requests and responses
+# Converts data between external format and use cases

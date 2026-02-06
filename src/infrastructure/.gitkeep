@@ -1,0 +1,3 @@
+# Infrastructure Layer (Gateways/Adapters)
+# Implements repository interfaces
+# Handles external services (Notion API, etc.)
