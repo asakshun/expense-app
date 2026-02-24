@@ -22,29 +22,6 @@ export class NotionExpenseGateway implements ExpenseRepository {
    * 支出をNotionデータベースに保存
    */
   async save(expense: Expense): Promise<string> {
-<<<<<<< HEAD
-    const response = await this.withRetry(async () => {
-      return await this.client.pages.create({
-        parent: { database_id: this.databaseId },
-        properties: {
-          '金額': {
-            number: expense.getAmount().getValue(),
-          },
-          '日付': {
-            date: {
-              start: this.formatDate(expense.getDate().getValue()),
-            },
-          },
-          'カテゴリ': {
-            select: expense.getCategory() 
-              ? { name: expense.getCategory()!.getValue() }
-              : null
-          }
-        },
-      });
-    });
-    return response.id;
-=======
   // プロパティを動的に構築
   const properties: any = {
     '金額': {
@@ -63,7 +40,6 @@ export class NotionExpenseGateway implements ExpenseRepository {
     properties['カテゴリ'] = {
       select: { name: category.getValue() }
     };
->>>>>>> 83eade5 (Add Notion expense gateway implementation)
   }
 
   const response = await this.withRetry(async () => {
