@@ -4,6 +4,7 @@ import { Expense } from '../../domain/entities/Expense';
 import { Period } from '../../domain/value-objects/Period';
 import { Amount } from '../../domain/value-objects/Amount';
 import { ExpenseDate } from '../../domain/value-objects/ExpenseDate';
+import { Category } from '../../domain/value-objects/Category';
 
 /**
  * Notion APIを使用したExpenseRepositoryの実装
@@ -20,9 +21,9 @@ export class NotionExpenseGateway implements ExpenseRepository {
   /**
    * 支出をNotionデータベースに保存
    */
-  async save(expense: Expense): Promise<void> {
-    await this.withRetry(async () => {
-      await this.client.pages.create({
+  async save(expense: Expense): Promise<string> {
+    const response = await this.withRetry(async () => {
+      return await this.client.pages.create({
         parent: { database_id: this.databaseId },
         properties: {
           '金額': {
@@ -33,9 +34,15 @@ export class NotionExpenseGateway implements ExpenseRepository {
               start: this.formatDate(expense.getDate().getValue()),
             },
           },
+          'カテゴリ': {
+            select: expense.getCategory() 
+              ? { name: expense.getCategory()!.getValue() }
+              : null
+          }
         },
       });
     });
+    return response.id;
   }
 
   /**
@@ -70,6 +77,39 @@ export class NotionExpenseGateway implements ExpenseRepository {
   }
 
   /**
+   * レコードIDで支出を取得
+   */
+  async findById(recordId: string): Promise<Expense | null> {
+    try {
+      const page = await this.withRetry(async () => {
+        return await this.client.pages.retrieve({ page_id: recordId });
+      });
+      return this.pageToExpense(page);
+    } catch (error: any) {
+      if (error.code === 'object_not_found') {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 支出のカテゴリを更新
+   */
+  async updateCategory(recordId: string, category: Category): Promise<void> {
+    await this.withRetry(async () => {
+      await this.client.pages.update({
+        page_id: recordId,
+        properties: {
+          'カテゴリ': {
+            select: { name: category.getValue() }
+          }
+        }
+      });
+    });
+  }
+
+  /**
    * NotionページをExpenseエンティティに変換
    */
   private pageToExpense(page: any): Expense | null {
@@ -99,7 +139,17 @@ export class NotionExpenseGateway implements ExpenseRepository {
       const date = new Date(dateProperty.date.start);
       const expenseDate = ExpenseDate.fromDate(date);
       
-      return Expense.reconstitute(id, amountResult.value, expenseDate);
+      // カテゴリプロパティの取得（オプショナル）
+      let category: Category | undefined;
+      const categoryProperty = page.properties['カテゴリ'];
+      if (categoryProperty?.type === 'select' && categoryProperty.select?.name) {
+        const categoryResult = Category.fromString(categoryProperty.select.name);
+        if (categoryResult.success) {
+          category = categoryResult.value;
+        }
+      }
+      
+      return Expense.reconstitute(id, amountResult.value, expenseDate, category);
     } catch (error) {
       console.error('Error converting page to Expense:', error);
       return null;

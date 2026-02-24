@@ -4,6 +4,7 @@ import { NotionSettingsGateway } from '../gateways/NotionSettingsGateway';
 import { RecordExpenseUseCaseImpl } from '../../application/use-cases/RecordExpenseUseCase';
 import { GetExpenseSummaryUseCaseImpl } from '../../application/use-cases/GetExpenseSummaryUseCase';
 import { UpdateSettingsUseCaseImpl } from '../../application/use-cases/UpdateSettingsUseCase';
+import { UpdateExpenseCategoryUseCaseImpl } from '../../application/use-cases/UpdateExpenseCategoryUseCase';
 import { WebhookPresenterImpl } from '../../presentation/presenters/WebhookPresenter';
 import { LIFFPresenterImpl } from '../../presentation/presenters/LIFFPresenter';
 import { getNotionConfig } from '../config/NotionConfig';
@@ -50,6 +51,7 @@ export class Container {
   private readonly recordExpenseUseCase: RecordExpenseUseCaseImpl;
   private readonly getExpenseSummaryUseCase: GetExpenseSummaryUseCaseImpl;
   private readonly updateSettingsUseCase: UpdateSettingsUseCaseImpl;
+  private readonly updateExpenseCategoryUseCase: UpdateExpenseCategoryUseCaseImpl;
   private readonly webhookPresenter: WebhookPresenterImpl;
   private readonly liffPresenter: LIFFPresenterImpl;
   private readonly lineConfig: LineConfig;
@@ -89,9 +91,14 @@ export class Container {
       this.notionSettingsGateway
     );
 
+    this.updateExpenseCategoryUseCase = new UpdateExpenseCategoryUseCaseImpl(
+      this.notionExpenseGateway
+    );
+
     // プレゼンターの初期化
     this.webhookPresenter = new WebhookPresenterImpl(
-      this.recordExpenseUseCase
+      this.recordExpenseUseCase,
+      this.updateExpenseCategoryUseCase
     );
 
     this.liffPresenter = new LIFFPresenterImpl(
@@ -140,6 +147,10 @@ export class Container {
 
   public getUpdateSettingsUseCase(): UpdateSettingsUseCaseImpl {
     return this.updateSettingsUseCase;
+  }
+
+  public getUpdateExpenseCategoryUseCase(): UpdateExpenseCategoryUseCaseImpl {
+    return this.updateExpenseCategoryUseCase;
   }
 
   public getWebhookPresenter(): WebhookPresenterImpl {

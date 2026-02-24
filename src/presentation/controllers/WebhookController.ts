@@ -13,8 +13,16 @@ export interface WebhookResponse {
   body: string;
 }
 
+export interface LinePostbackEvent {
+  type: 'postback';
+  postback: {
+    data: string;
+  };
+  replyToken: string;
+}
+
 export interface LineWebhookBody {
-  events: Array<LineMessageEvent | { type: string }>;
+  events: Array<LineMessageEvent | LinePostbackEvent | { type: string }>;
 }
 
 export class WebhookController {
@@ -42,6 +50,9 @@ export class WebhookController {
       for (const event of webhookBody.events) {
         if (event.type === 'message' && 'message' in event && event.message.type === 'text') {
           const reply = await this.presenter.handleMessage(event as LineMessageEvent);
+          replies.push(reply);
+        } else if (event.type === 'postback' && 'postback' in event) {
+          const reply = await this.presenter.handlePostback(event as LinePostbackEvent);
           replies.push(reply);
         }
       }
