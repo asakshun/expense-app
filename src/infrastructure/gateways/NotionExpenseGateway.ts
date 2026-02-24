@@ -22,6 +22,7 @@ export class NotionExpenseGateway implements ExpenseRepository {
    * 支出をNotionデータベースに保存
    */
   async save(expense: Expense): Promise<string> {
+<<<<<<< HEAD
     const response = await this.withRetry(async () => {
       return await this.client.pages.create({
         parent: { database_id: this.databaseId },
@@ -43,7 +44,38 @@ export class NotionExpenseGateway implements ExpenseRepository {
       });
     });
     return response.id;
+=======
+  // プロパティを動的に構築
+  const properties: any = {
+    '金額': {
+      number: expense.getAmount().getValue(),
+    },
+    '日付': {
+      date: {
+        start: this.formatDate(expense.getDate().getValue()),
+      },
+    }
+  };
+
+  // カテゴリがある場合のみプロパティを追加
+  const category = expense.getCategory();
+  if (category) {
+    properties['カテゴリ'] = {
+      select: { name: category.getValue() }
+    };
+>>>>>>> 83eade5 (Add Notion expense gateway implementation)
   }
+
+  const response = await this.withRetry(async () => {
+    return await this.client.pages.create({
+      parent: { database_id: this.databaseId },
+      properties
+    });
+  });
+  
+  return response.id;
+}
+
 
   /**
    * 期間内の支出をNotionデータベースから取得
