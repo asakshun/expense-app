@@ -8,7 +8,7 @@ export interface RecordExpenseInput {
 }
 
 export type RecordExpenseOutput = 
-  | { success: true; message: string }
+  | { success: true; message: string; recordId: string }
   | { success: false; error: string };
 
 export interface RecordExpenseUseCase {
@@ -34,11 +34,12 @@ export class RecordExpenseUseCaseImpl implements RecordExpenseUseCase {
 
     // Save to repository
     try {
-      await this.expenseRepository.save(expense);
+      const recordId = await this.expenseRepository.save(expense);
       
       return {
         success: true,
-        message: `支出を記録しました: ¥${amountResult.value.getValue().toLocaleString()}`
+        message: `支出を記録しました: ¥${amountResult.value.getValue().toLocaleString()}`,
+        recordId
       };
     } catch (error) {
       return {
