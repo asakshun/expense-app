@@ -110,7 +110,7 @@ export class WebhookPresenterImpl implements WebhookPresenter {
     });
 
     const responseText = result.success
-      ? `${result.category}を記録しました: ¥${result.amount.toLocaleString()}`
+      ? `${result.category}を記録しました: ${result.amount < 0 ? `-¥${Math.abs(result.amount).toLocaleString()}` : `¥${result.amount.toLocaleString()}`}`
       : result.error;
 
     return {

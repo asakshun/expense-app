@@ -31,8 +31,8 @@ export class Amount {
       };
     }
     
-    // Check if it contains only digits (and optional decimal point)
-    if (!/^\d+(\.\d+)?$/.test(normalized)) {
+    // Check if it contains only digits (and optional decimal point, with optional leading minus)
+    if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
       return {
         success: false,
         error: new ParseError('Input must contain only numeric characters')
@@ -56,13 +56,6 @@ export class Amount {
       };
     }
     
-    if (numValue < 0) {
-      return {
-        success: false,
-        error: new ParseError('Amount must be 0 or greater')
-      };
-    }
-    
     return {
       success: true,
       value: new Amount(numValue)
@@ -70,13 +63,6 @@ export class Amount {
   }
 
   static fromNumber(value: number): Result<Amount, ValidationError> {
-    if (value < 0) {
-      return {
-        success: false,
-        error: new ValidationError('Amount must be 0 or greater')
-      };
-    }
-    
     if (!Number.isFinite(value)) {
       return {
         success: false,

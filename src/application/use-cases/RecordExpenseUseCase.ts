@@ -36,9 +36,14 @@ export class RecordExpenseUseCaseImpl implements RecordExpenseUseCase {
     try {
       const recordId = await this.expenseRepository.save(expense);
       
+      const amount = amountResult.value.getValue();
+      const formatted = amount < 0
+        ? `-¥${Math.abs(amount).toLocaleString()}`
+        : `¥${amount.toLocaleString()}`;
+      const label = amount < 0 ? '調整を記録しました' : '支出を記録しました';
       return {
         success: true,
-        message: `支出を記録しました: ¥${amountResult.value.getValue().toLocaleString()}`,
+        message: `${label}: ${formatted}`,
         recordId
       };
     } catch (error) {
