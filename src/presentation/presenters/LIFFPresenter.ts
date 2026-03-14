@@ -5,6 +5,10 @@ import { StartDay } from '../../domain/value-objects/Period';
 export interface SummaryViewModel {
   totalAmount: string; // Formatted (e.g., "¥1,000")
   periodText: string; // Period text (e.g., "2024/1/1 - 2024/1/31")
+  budgetLimit: string | null; // Formatted budget limit (e.g., "¥10,000") or null if not set
+  remainingBudget: string | null; // Formatted remaining budget (e.g., "¥5,000") or null if no budget limit
+  usageRate: number | null; // Formatted usage rate (e.g., "50%") or null if no budget limit
+  isOverBudget: boolean | null; // true if over budget, false if within budget, null if no budget limit
 }
 
 export interface UpdateResult {
@@ -14,7 +18,7 @@ export interface UpdateResult {
 
 export interface LIFFPresenter {
   getSummary(): Promise<SummaryViewModel>;
-  updateStartDay(startDay: StartDay): Promise<UpdateResult>;
+  updateSettings(startDay: StartDay, budgetLimit?: number | null): Promise<UpdateResult>;
 }
 
 export class LIFFPresenterImpl implements LIFFPresenter {
@@ -35,13 +39,17 @@ export class LIFFPresenterImpl implements LIFFPresenter {
 
     return {
       totalAmount: formattedAmount,
-      periodText
+      periodText,
+      budgetLimit: result.budgetLimit !== null ? this.formatAmount(result.budgetLimit) : null,
+      remainingBudget: result.budgetLimit !== null ? this.formatAmount(Math.abs(result.budgetLimit - result.totalAmount)) : null,
+      usageRate: result.budgetLimit !== null ? Math.round((result.totalAmount / result.budgetLimit) * 100) : null,
+      isOverBudget: result.budgetLimit !== null ? result.totalAmount > result.budgetLimit : null
     };
   }
 
-  async updateStartDay(startDay: StartDay): Promise<UpdateResult> {
+  async updateSettings(startDay: StartDay, budgetLimit: number | null): Promise<UpdateResult> {
     // Call UpdateSettingsUseCase
-    const result = await this.updateSettingsUseCase.execute({ startDay });
+    const result = await this.updateSettingsUseCase.execute({ startDay, budgetLimit });
 
     if (result.success) {
       return { success: true };

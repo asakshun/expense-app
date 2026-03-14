@@ -1,8 +1,9 @@
 import { StartDay } from '../../domain/value-objects/Period';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 
-export interface UpdateSettingsInput {
+export type UpdateSettingsInput = {
   startDay: StartDay;
+  budgetLimit?: number | null;
 }
 
 export type UpdateSettingsOutput = 
@@ -23,6 +24,11 @@ export class UpdateSettingsUseCaseImpl implements UpdateSettingsUseCase {
 
       // Update start day
       settings.updateStartDay(input.startDay);
+
+      // Update budget limit if provided
+      if (input.budgetLimit !== undefined) {
+        settings.updateBudgetLimit(input.budgetLimit);
+      }
 
       // Save updated settings
       await this.settingsRepository.save(settings);

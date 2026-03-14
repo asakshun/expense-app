@@ -4,16 +4,18 @@ import { randomUUID } from 'crypto';
 export class Settings {
   private constructor(
     private readonly id: string,
-    private startDay: StartDay
+    private startDay: StartDay,
+    private budgetLimit: number | null
   ) {}
 
-  static create(startDay: StartDay): Settings {
+  // Factory method to create a new Settings instance with a generated ID
+  static create(startDay: StartDay, budgetLimit: number | null): Settings {
     const id = randomUUID();
-    return new Settings(id, startDay);
+    return new Settings(id, startDay, budgetLimit);
   }
 
-  static reconstitute(id: string, startDay: StartDay): Settings {
-    return new Settings(id, startDay);
+  static reconstitute(id: string, startDay: StartDay, budgetLimit: number | null): Settings {
+    return new Settings(id, startDay, budgetLimit);
   }
 
   getId(): string {
@@ -24,7 +26,15 @@ export class Settings {
     return this.startDay;
   }
 
+  getBudgetLimit(): number | null {
+    return this.budgetLimit;
+  }
+
   updateStartDay(newStartDay: StartDay): void {
     this.startDay = newStartDay;
+  }
+
+  updateBudgetLimit(newBudgetLimit: number | null): void {
+    this.budgetLimit = newBudgetLimit;
   }
 }

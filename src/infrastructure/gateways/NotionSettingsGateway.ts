@@ -34,7 +34,7 @@ export class NotionSettingsGateway implements SettingsRepository {
 
     if (response.results.length === 0) {
       // 設定が存在しない場合、デフォルト値で作成
-      const defaultSettings = Settings.create(1);
+      const defaultSettings = Settings.create(1, null);
       await this.save(defaultSettings);
       return defaultSettings;
     }
@@ -70,6 +70,9 @@ export class NotionSettingsGateway implements SettingsRepository {
             'startDay': {
               number: settings.getStartDay(),
             },
+            'budgetLimit': {
+              number: settings.getBudgetLimit(),
+            }
           },
         });
       });
@@ -91,6 +94,9 @@ export class NotionSettingsGateway implements SettingsRepository {
             'startDay': {
               number: settings.getStartDay(),
             },
+            'budgetLimit': {
+              number: settings.getBudgetLimit(),
+            },
           },
         });
       });
@@ -110,13 +116,16 @@ export class NotionSettingsGateway implements SettingsRepository {
     }
     
     const startDay = valueProperty.number as StartDay;
+    const budgetLimitProperty = page.properties['budgetLimit'];
+    const budgetLimit = budgetLimitProperty?.type === 'number' ? budgetLimitProperty.number : null;
     
+
     // 値の検証
     if (startDay !== 1 && startDay !== 25) {
       throw new Error(`Invalid start day value: ${startDay}. Must be 1 or 25.`);
     }
     
-    return Settings.reconstitute(id, startDay);
+    return Settings.reconstitute(id, startDay, budgetLimit);
   }
 
   /**

@@ -3,16 +3,17 @@ import { Period } from '../../domain/value-objects/Period';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 
-export interface GetExpenseSummaryInput {
+export type GetExpenseSummaryInput = {
   currentDate?: Date; // For testing purposes, defaults to now
 }
 
-export interface GetExpenseSummaryOutput {
+export type GetExpenseSummaryOutput = {
   totalAmount: number;
   period: {
     startDate: Date;
     endDate: Date;
-  };
+  },
+  budgetLimit: number | null;
 }
 
 export interface GetExpenseSummaryUseCase {
@@ -57,7 +58,8 @@ export class GetExpenseSummaryUseCaseImpl implements GetExpenseSummaryUseCase {
       period: {
         startDate: period.getStartDate(),
         endDate: period.getEndDate()
-      }
+      },
+      budgetLimit: settings.getBudgetLimit()
     };
   }
 }

@@ -5,6 +5,10 @@ import { useEffect, useState } from 'react';
 interface SummaryData {
   totalAmount: string;
   periodText: string;
+  budgetLimit: string | null;
+  remainingBudget: string | null;
+  usageRate: number | null;
+  isOverBudget: boolean | null;
 }
 
 export default function LIFFPage() {
@@ -174,13 +178,52 @@ export default function LIFFPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 合計支出額
               </p>
-              <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+              <p className={`text-4xl font-bold mb-4 ${summary.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                 {summary.totalAmount}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 期間: {summary.periodText}
               </p>
             </div>
+
+            {/* Budget Card */}
+            {summary.budgetLimit !== null && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">支出限度額</p>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{summary.budgetLimit}</p>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3 overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all ${
+                      summary.isOverBudget
+                        ? 'bg-red-500'
+                        : (summary.usageRate ?? 0) >= 70
+                        ? 'bg-yellow-400'
+                        : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${Math.min(summary.usageRate ?? 0, 100)}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <p className={`text-sm font-medium ${
+                    summary.isOverBudget
+                      ? 'text-red-600 dark:text-red-400'
+                      : (summary.usageRate ?? 0) >= 70
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                  }`}>
+                    {summary.usageRate}%
+                  </p>
+                  <p className={`text-sm font-medium ${summary.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                    {summary.isOverBudget ? `${summary.remainingBudget} 超過` : `残り ${summary.remainingBudget}`}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Start Day Toggle */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">

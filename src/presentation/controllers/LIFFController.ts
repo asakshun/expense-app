@@ -51,18 +51,29 @@ export class LIFFController {
       }
 
       // Validate request body
-      const { startDay } = req.body || {};
+      const { startDay, budgetLimit } = req.body || {};
       if (startDay !== 1 && startDay !== 25) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ 
-            error: '始まり日は1または25である必要があります。' 
+          body: JSON.stringify({
+            error: '始まり日は1または25である必要があります。'
           })
         };
       }
 
+      if (budgetLimit !== undefined && budgetLimit !== null) {
+        if (typeof budgetLimit !== 'number' || !Number.isInteger(budgetLimit) || budgetLimit <= 0) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: '支出限度額は正の整数である必要があります。'
+            })
+          };
+        }
+      }
+
       // Call presenter to update settings
-      const result = await this.presenter.updateStartDay(startDay as StartDay);
+      const result = await this.presenter.updateSettings(startDay as StartDay, budgetLimit);
 
       if (result.success) {
         return {
