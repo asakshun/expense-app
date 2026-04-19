@@ -1,3 +1,8 @@
+---
+name: project-background
+description: プロジェクトの背景・前提知識を提供するスキル
+---
+
 # Project Background Skill
 
 このスキルはプロジェクトの背景・前提知識を提供します。コードを書く・レビューする前に必ずこの内容を参照してください。

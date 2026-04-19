@@ -66,7 +66,7 @@ export default function LIFFPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/liff/summary');
+        const response = await fetch('/api/summary');
         
         if (!response.ok) {
           // 詳細なエラー情報を取得
@@ -105,7 +105,7 @@ export default function LIFFPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/liff/settings', {
+      const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export default function LIFFPage() {
       setStartDay(newStartDay);
 
       // Refresh summary
-      const summaryResponse = await fetch('/api/liff/summary');
+      const summaryResponse = await fetch('/api/summary');
       if (summaryResponse.ok) {
         const data = await summaryResponse.json();
         setSummary(data);

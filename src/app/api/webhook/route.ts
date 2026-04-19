@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client, middleware } from '@line/bot-sdk';
-import { WebhookController } from '../../../src/presentation/controllers/WebhookController';
-import { Container } from '../../../src/infrastructure/di/Container';
+import { WebhookController } from '../../../presentation/controllers/WebhookController';
+import { Container } from '../../../infrastructure/di/Container';
 
 /**
  * LINE Webhook エンドポイント
