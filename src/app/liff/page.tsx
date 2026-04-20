@@ -11,12 +11,24 @@ interface SummaryData {
   isOverBudget: boolean | null;
 }
 
+interface CategoriesData {
+  defaultCategories: { id: string; label: string }[];
+  customCategories: string[];
+  allCategories: { id: string; label: string }[];
+}
+
+const MAX_TOTAL_CATEGORIES = 13;
+
 export default function LIFFPage() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [startDay, setStartDay] = useState<1 | 25>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liffInitialized, setLiffInitialized] = useState(false);
+  const [categories, setCategories] = useState<CategoriesData | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   // Initialize LIFF
   useEffect(() => {
@@ -57,6 +69,18 @@ export default function LIFFPage() {
     initializeLiff();
   }, []);
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
+
   // Fetch summary data
   useEffect(() => {
     if (!liffInitialized) return;
@@ -82,9 +106,7 @@ export default function LIFFPage() {
         const data = await response.json();
         console.log('Summary data:', data);
         setSummary(data);
-        
-        // Extract start day from period (simple heuristic)
-        // If period starts on 25th, set startDay to 25, otherwise 1
+
         const periodStart = data.periodText.split(' - ')[0];
         const day = parseInt(periodStart.split('/')[2]);
         setStartDay(day === 25 ? 25 : 1);
@@ -97,6 +119,7 @@ export default function LIFFPage() {
     };
 
     fetchSummary();
+    fetchCategories();
   }, [liffInitialized]);
 
   // Handle start day toggle
@@ -130,6 +153,53 @@ export default function LIFFPage() {
       setError('設定の更新に失敗しました。');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    setCategoryLoading(true);
+    setCategoryError(null);
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryName: name }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setNewCategoryName('');
+        await fetchCategories();
+      } else {
+        setCategoryError(data.error ?? '追加に失敗しました。');
+      }
+    } catch {
+      setCategoryError('追加に失敗しました。');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleRemoveCategory = async (categoryName: string) => {
+    setCategoryLoading(true);
+    setCategoryError(null);
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryName }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        await fetchCategories();
+      } else {
+        setCategoryError(data.error ?? '削除に失敗しました。');
+      }
+    } catch {
+      setCategoryError('削除に失敗しました。');
+    } finally {
+      setCategoryLoading(false);
     }
   };
 
@@ -260,6 +330,89 @@ export default function LIFFPage() {
                 給与支払いスケジュールに合わせて期間の開始日を設定できます
               </p>
             </div>
+
+            {/* Category Management */}
+            {categories && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    カテゴリ管理
+                  </p>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {categories.allCategories.length} / {MAX_TOTAL_CATEGORIES}
+                  </span>
+                </div>
+
+                {categoryError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mb-3">{categoryError}</p>
+                )}
+
+                {/* Default categories */}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">デフォルト</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {categories.defaultCategories.map(cat => (
+                    <span
+                      key={cat.id}
+                      className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"
+                    >
+                      {cat.label}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Custom categories */}
+                {categories.customCategories.length > 0 && (
+                  <>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">カスタム</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {categories.customCategories.map(name => (
+                        <span
+                          key={name}
+                          className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full"
+                        >
+                          {name}
+                          <button
+                            onClick={() => handleRemoveCategory(name)}
+                            disabled={categoryLoading}
+                            className="ml-1 text-blue-400 hover:text-red-500 disabled:opacity-50"
+                            aria-label={`${name}を削除`}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Add form */}
+                {categories.allCategories.length < MAX_TOTAL_CATEGORIES ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={e => setNewCategoryName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
+                      placeholder="新しいカテゴリ名"
+                      maxLength={50}
+                      disabled={categoryLoading}
+                      className="flex-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    />
+                    <button
+                      onClick={handleAddCategory}
+                      disabled={categoryLoading || !newCategoryName.trim()}
+                      className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      追加
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                    カテゴリは最大{MAX_TOTAL_CATEGORIES}個まで登録できます
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

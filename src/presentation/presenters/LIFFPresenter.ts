@@ -1,14 +1,18 @@
 import { GetExpenseSummaryUseCase } from '../../application/use-cases/GetExpenseSummaryUseCase';
 import { UpdateSettingsUseCase } from '../../application/use-cases/UpdateSettingsUseCase';
+import { GetCategoriesUseCase } from '../../application/use-cases/GetCategoriesUseCase';
+import { AddCategoryUseCase } from '../../application/use-cases/AddCategoryUseCase';
+import { RemoveCategoryUseCase } from '../../application/use-cases/RemoveCategoryUseCase';
+import { CategoryOption } from '../../infrastructure/config/CategoryConfig';
 import { StartDay } from '../../domain/value-objects/Period';
 
 export interface SummaryViewModel {
-  totalAmount: string; // Formatted (e.g., "¥1,000")
-  periodText: string; // Period text (e.g., "2024/1/1 - 2024/1/31")
-  budgetLimit: string | null; // Formatted budget limit (e.g., "¥10,000") or null if not set
-  remainingBudget: string | null; // Formatted remaining budget (e.g., "¥5,000") or null if no budget limit
-  usageRate: number | null; // Formatted usage rate (e.g., "50%") or null if no budget limit
-  isOverBudget: boolean | null; // true if over budget, false if within budget, null if no budget limit
+  totalAmount: string;
+  periodText: string;
+  budgetLimit: string | null;
+  remainingBudget: string | null;
+  usageRate: number | null;
+  isOverBudget: boolean | null;
 }
 
 export interface UpdateResult {
@@ -16,15 +20,33 @@ export interface UpdateResult {
   error?: string;
 }
 
+export interface CategoriesViewModel {
+  defaultCategories: CategoryOption[];
+  customCategories: string[];
+  allCategories: CategoryOption[];
+}
+
+export interface CategoryMutationResult {
+  success: boolean;
+  customCategories?: string[];
+  error?: string;
+}
+
 export interface LIFFPresenter {
   getSummary(): Promise<SummaryViewModel>;
   updateSettings(startDay: StartDay, budgetLimit?: number | null): Promise<UpdateResult>;
+  getCategories(): Promise<CategoriesViewModel>;
+  addCategory(categoryName: string): Promise<CategoryMutationResult>;
+  removeCategory(categoryName: string): Promise<CategoryMutationResult>;
 }
 
 export class LIFFPresenterImpl implements LIFFPresenter {
   constructor(
     private readonly getExpenseSummaryUseCase: GetExpenseSummaryUseCase,
-    private readonly updateSettingsUseCase: UpdateSettingsUseCase
+    private readonly updateSettingsUseCase: UpdateSettingsUseCase,
+    private readonly getCategoriesUseCase: GetCategoriesUseCase,
+    private readonly addCategoryUseCase: AddCategoryUseCase,
+    private readonly removeCategoryUseCase: RemoveCategoryUseCase
   ) {}
 
   async getSummary(): Promise<SummaryViewModel> {
@@ -48,17 +70,31 @@ export class LIFFPresenterImpl implements LIFFPresenter {
   }
 
   async updateSettings(startDay: StartDay, budgetLimit: number | null): Promise<UpdateResult> {
-    // Call UpdateSettingsUseCase
     const result = await this.updateSettingsUseCase.execute({ startDay, budgetLimit });
-
     if (result.success) {
       return { success: true };
-    } else {
-      return {
-        success: false,
-        error: result.error
-      };
     }
+    return { success: false, error: result.error };
+  }
+
+  async getCategories(): Promise<CategoriesViewModel> {
+    return this.getCategoriesUseCase.execute();
+  }
+
+  async addCategory(categoryName: string): Promise<CategoryMutationResult> {
+    const result = await this.addCategoryUseCase.execute({ categoryName });
+    if (result.success) {
+      return { success: true, customCategories: result.customCategories };
+    }
+    return { success: false, error: result.error };
+  }
+
+  async removeCategory(categoryName: string): Promise<CategoryMutationResult> {
+    const result = await this.removeCategoryUseCase.execute({ categoryName });
+    if (result.success) {
+      return { success: true, customCategories: result.customCategories };
+    }
+    return { success: false, error: result.error };
   }
 
   private formatAmount(amount: number): string {

@@ -54,11 +54,28 @@ export class CategoryConfig {
 
   /**
    * カテゴリIDからラベルを取得
-   * 
-   * @param id カテゴリID
-   * @returns カテゴリラベル（見つからない場合はundefined）
    */
   static getCategoryLabel(id: string): string | undefined {
     return this.getCategories().find(c => c.id === id)?.label;
+  }
+
+  /**
+   * デフォルトカテゴリを返す（環境変数上書き前の固定リスト）
+   */
+  static getDefaultCategories(): CategoryOption[] {
+    return this.DEFAULT_CATEGORIES;
+  }
+
+  /**
+   * デフォルトカテゴリとカスタムカテゴリをマージして返す
+   * カスタムカテゴリは id = label として CategoryOption に変換する
+   */
+  static mergeWithCustom(customCategories: string[]): CategoryOption[] {
+    const base = this.getCategories();
+    const existingLabels = new Set(base.map(c => c.label));
+    const custom: CategoryOption[] = customCategories
+      .filter(name => !existingLabels.has(name))
+      .map(name => ({ id: name, label: name }));
+    return [...base, ...custom];
   }
 }
