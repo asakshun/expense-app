@@ -25,7 +25,12 @@ export default function LIFFPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liffInitialized, setLiffInitialized] = useState(false);
-  const [categories, setCategories] = useState<CategoriesData | null>(null);
+  const [categories, setCategories] = useState<CategoriesData>({
+    defaultCategories: [],
+    customCategories: [],
+    allCategories: [],
+  });
+  const [categoriesReady, setCategoriesReady] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
@@ -78,6 +83,8 @@ export default function LIFFPage() {
       }
     } catch (err) {
       console.error('Failed to fetch categories:', err);
+    } finally {
+      setCategoriesReady(true);
     }
   };
 
@@ -332,7 +339,7 @@ export default function LIFFPage() {
             </div>
 
             {/* Category Management */}
-            {categories && (
+            {categoriesReady && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
