@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LIFFController } from '../../../../presentation/controllers/LIFFController';
-import { Container } from '../../../../infrastructure/di/Container';
+import { LIFFController } from '../../../presentation/controllers/LIFFController';
+import { Container } from '../../../infrastructure/di/Container';
 
 export async function GET(request: NextRequest) {
   try {
