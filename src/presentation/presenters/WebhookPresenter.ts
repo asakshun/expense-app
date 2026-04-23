@@ -1,6 +1,7 @@
 import { RecordExpenseUseCase } from '../../application/use-cases/RecordExpenseUseCase';
 import { UpdateExpenseCategoryUseCase } from '../../application/use-cases/UpdateExpenseCategoryUseCase';
-import { CategoryConfig } from '../../infrastructure/config/CategoryConfig';
+import { GetCategoriesUseCase } from '../../application/use-cases/GetCategoriesUseCase';
+import { CategoryOption } from '../../infrastructure/config/CategoryConfig';
 
 export interface LineMessageEvent {
   type: 'message';
@@ -48,7 +49,8 @@ export interface WebhookPresenter {
 export class WebhookPresenterImpl implements WebhookPresenter {
   constructor(
     private readonly recordExpenseUseCase: RecordExpenseUseCase,
-    private readonly updateExpenseCategoryUseCase: UpdateExpenseCategoryUseCase
+    private readonly updateExpenseCategoryUseCase: UpdateExpenseCategoryUseCase,
+    private readonly getCategoriesUseCase: GetCategoriesUseCase
   ) {}
 
   async handleMessage(event: LineMessageEvent): Promise<LineReplyMessage> {
@@ -61,8 +63,7 @@ export class WebhookPresenterImpl implements WebhookPresenter {
     });
 
     if (result.success) {
-      // Build Quick Reply with category options
-      const quickReply = this.buildCategoryQuickReply(result.recordId);
+      const quickReply = await this.buildCategoryQuickReply(result.recordId);
       
       return {
         replyToken: event.replyToken,
@@ -124,8 +125,17 @@ export class WebhookPresenterImpl implements WebhookPresenter {
     };
   }
 
-  private buildCategoryQuickReply(recordId: string): { items: LineQuickReplyItem[] } {
-    const categories = CategoryConfig.getCategories();
+  private async buildCategoryQuickReply(recordId: string): Promise<{ items: LineQuickReplyItem[] }> {
+    let categories: CategoryOption[];
+    try {
+      const result = await this.getCategoriesUseCase.execute();
+      categories = result.allCategories;
+    } catch {
+      // フォールバック: デフォルトカテゴリを使用
+      const { CategoryConfig } = await import('../../infrastructure/config/CategoryConfig');
+      categories = CategoryConfig.getCategories();
+    }
+
     const items: LineQuickReplyItem[] = categories.map(category => ({
       type: 'action',
       action: {

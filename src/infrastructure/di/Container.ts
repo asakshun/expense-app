@@ -5,6 +5,9 @@ import { RecordExpenseUseCaseImpl } from '../../application/use-cases/RecordExpe
 import { GetExpenseSummaryUseCaseImpl } from '../../application/use-cases/GetExpenseSummaryUseCase';
 import { UpdateSettingsUseCaseImpl } from '../../application/use-cases/UpdateSettingsUseCase';
 import { UpdateExpenseCategoryUseCaseImpl } from '../../application/use-cases/UpdateExpenseCategoryUseCase';
+import { GetCategoriesUseCaseImpl } from '../../application/use-cases/GetCategoriesUseCase';
+import { AddCategoryUseCaseImpl } from '../../application/use-cases/AddCategoryUseCase';
+import { RemoveCategoryUseCaseImpl } from '../../application/use-cases/RemoveCategoryUseCase';
 import { WebhookPresenterImpl } from '../../presentation/presenters/WebhookPresenter';
 import { LIFFPresenterImpl } from '../../presentation/presenters/LIFFPresenter';
 import { getNotionConfig } from '../config/NotionConfig';
@@ -52,6 +55,9 @@ export class Container {
   private readonly getExpenseSummaryUseCase: GetExpenseSummaryUseCaseImpl;
   private readonly updateSettingsUseCase: UpdateSettingsUseCaseImpl;
   private readonly updateExpenseCategoryUseCase: UpdateExpenseCategoryUseCaseImpl;
+  private readonly getCategoriesUseCase: GetCategoriesUseCaseImpl;
+  private readonly addCategoryUseCase: AddCategoryUseCaseImpl;
+  private readonly removeCategoryUseCase: RemoveCategoryUseCaseImpl;
   private readonly webhookPresenter: WebhookPresenterImpl;
   private readonly liffPresenter: LIFFPresenterImpl;
   private readonly lineConfig: LineConfig;
@@ -95,15 +101,31 @@ export class Container {
       this.notionExpenseGateway
     );
 
+    this.getCategoriesUseCase = new GetCategoriesUseCaseImpl(
+      this.notionSettingsGateway
+    );
+
+    this.addCategoryUseCase = new AddCategoryUseCaseImpl(
+      this.notionSettingsGateway
+    );
+
+    this.removeCategoryUseCase = new RemoveCategoryUseCaseImpl(
+      this.notionSettingsGateway
+    );
+
     // プレゼンターの初期化
     this.webhookPresenter = new WebhookPresenterImpl(
       this.recordExpenseUseCase,
-      this.updateExpenseCategoryUseCase
+      this.updateExpenseCategoryUseCase,
+      this.getCategoriesUseCase
     );
 
     this.liffPresenter = new LIFFPresenterImpl(
       this.getExpenseSummaryUseCase,
-      this.updateSettingsUseCase
+      this.updateSettingsUseCase,
+      this.getCategoriesUseCase,
+      this.addCategoryUseCase,
+      this.removeCategoryUseCase
     );
   }
 
@@ -151,6 +173,18 @@ export class Container {
 
   public getUpdateExpenseCategoryUseCase(): UpdateExpenseCategoryUseCaseImpl {
     return this.updateExpenseCategoryUseCase;
+  }
+
+  public getGetCategoriesUseCase(): GetCategoriesUseCaseImpl {
+    return this.getCategoriesUseCase;
+  }
+
+  public getAddCategoryUseCase(): AddCategoryUseCaseImpl {
+    return this.addCategoryUseCase;
+  }
+
+  public getRemoveCategoryUseCase(): RemoveCategoryUseCaseImpl {
+    return this.removeCategoryUseCase;
   }
 
   public getWebhookPresenter(): WebhookPresenterImpl {

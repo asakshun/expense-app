@@ -47,6 +47,8 @@ export class NotionSettingsGateway implements SettingsRepository {
    * 設定をNotionデータベースに保存
    */
   async save(settings: Settings): Promise<void> {
+    const customCategoriesJson = JSON.stringify(settings.getCustomCategories());
+
     // 既存の設定ページを検索
     const response = await this.withRetry(async () => {
       return await this.client.databases.query({
@@ -72,7 +74,10 @@ export class NotionSettingsGateway implements SettingsRepository {
             },
             'budgetLimit': {
               number: settings.getBudgetLimit(),
-            }
+            },
+            'customCategories': {
+              rich_text: [{ text: { content: customCategoriesJson } }],
+            },
           },
         });
       });
@@ -83,19 +88,16 @@ export class NotionSettingsGateway implements SettingsRepository {
           parent: { database_id: this.databaseId },
           properties: {
             '名前': {
-              title: [
-                {
-                  text: {
-                    content: this.settingsName,
-                  },
-                },
-              ],
+              title: [{ text: { content: this.settingsName } }],
             },
             'startDay': {
               number: settings.getStartDay(),
             },
             'budgetLimit': {
               number: settings.getBudgetLimit(),
+            },
+            'customCategories': {
+              rich_text: [{ text: { content: customCategoriesJson } }],
             },
           },
         });
@@ -108,24 +110,33 @@ export class NotionSettingsGateway implements SettingsRepository {
    */
   private pageToSettings(page: any): Settings {
     const id = page.id;
-    
-    // startDayプロパティの取得
+
     const valueProperty = page.properties['startDay'];
     if (valueProperty?.type !== 'number' || typeof valueProperty.number !== 'number') {
       throw new Error('Invalid startDay property in settings');
     }
-    
-    const startDay = valueProperty.number as StartDay;
-    const budgetLimitProperty = page.properties['budgetLimit'];
-    const budgetLimit = budgetLimitProperty?.type === 'number' ? budgetLimitProperty.number : null;
-    
 
-    // 値の検証
+    const startDay = valueProperty.number as StartDay;
     if (startDay !== 1 && startDay !== 25) {
       throw new Error(`Invalid start day value: ${startDay}. Must be 1 or 25.`);
     }
-    
-    return Settings.reconstitute(id, startDay, budgetLimit);
+
+    const budgetLimitProperty = page.properties['budgetLimit'];
+    const budgetLimit = budgetLimitProperty?.type === 'number' ? budgetLimitProperty.number : null;
+
+    const customCategoriesProperty = page.properties['customCategories'];
+    let customCategories: string[] = [];
+    if (customCategoriesProperty?.type === 'rich_text') {
+      const text = customCategoriesProperty.rich_text?.[0]?.text?.content ?? '[]';
+      try {
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) customCategories = parsed;
+      } catch {
+        // 既存レコードにプロパティがない場合は空配列のまま
+      }
+    }
+
+    return Settings.reconstitute(id, startDay, budgetLimit, customCategories);
   }
 
   /**
