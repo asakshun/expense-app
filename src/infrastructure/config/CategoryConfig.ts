@@ -18,7 +18,6 @@ export class CategoryConfig {
     { id: 'transport', label: '交通費' },
     { id: 'entertainment', label: '娯楽費' },
     { id: 'utilities', label: '光熱費' },
-    { id: 'shopping', label: '買い物' },
     { id: 'health', label: '医療費' },
     { id: 'education', label: '教育費' },
     { id: 'other', label: 'その他' }
