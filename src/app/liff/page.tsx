@@ -25,6 +25,7 @@ export default function LIFFPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liffInitialized, setLiffInitialized] = useState(false);
+  const [monthOffset, setMonthOffset] = useState<0 | -1>(0);
   const [categories, setCategories] = useState<CategoriesData>({
     defaultCategories: [],
     customCategories: [],
@@ -97,8 +98,8 @@ export default function LIFFPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/summary');
-        
+        const response = await fetch(`/api/summary${monthOffset !== 0 ? `?monthOffset=${monthOffset}` : ''}`);
+
         if (!response.ok) {
           // 詳細なエラー情報を取得
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -127,7 +128,7 @@ export default function LIFFPage() {
 
     fetchSummary();
     fetchCategories();
-  }, [liffInitialized]);
+  }, [liffInitialized, monthOffset]);
 
   // Handle start day toggle
   const handleStartDayToggle = async (newStartDay: 1 | 25) => {
@@ -252,6 +253,26 @@ export default function LIFFPage() {
           <div className="space-y-6">
             {/* Total Amount Card */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+              {/* Month Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setMonthOffset(-1)}
+                  disabled={monthOffset === -1 || loading}
+                  className="text-sm text-blue-600 dark:text-blue-400 font-medium disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  ＜ 先月
+                </button>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {monthOffset === -1 ? '先月' : '今月'}
+                </span>
+                <button
+                  onClick={() => setMonthOffset(0)}
+                  disabled={monthOffset === 0 || loading}
+                  className="text-sm text-blue-600 dark:text-blue-400 font-medium disabled:opacity-0 disabled:pointer-events-none"
+                >
+                  今月 ＞
+                </button>
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 合計支出額
               </p>
@@ -263,8 +284,8 @@ export default function LIFFPage() {
               </p>
             </div>
 
-            {/* Budget Card */}
-            {summary.budgetLimit !== null && (
+            {/* Budget Card - 今月のみ表示 */}
+            {monthOffset === 0 && summary.budgetLimit !== null && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm text-gray-600 dark:text-gray-400">支出限度額</p>

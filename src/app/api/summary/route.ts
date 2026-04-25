@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
     const controller = new LIFFController(presenter);
     console.log('[Summary API] Controller initialized');
     
-    // サマリーを取得
+    const monthOffset = request.nextUrl.searchParams.get('monthOffset');
     const response = await controller.getSummary({
-      method: 'GET'
+      method: 'GET',
+      query: monthOffset !== null ? { monthOffset } : {}
     });
     console.log('[Summary API] Response:', response);
     

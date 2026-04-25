@@ -57,8 +57,8 @@ describe('AddCategoryUseCase', () => {
   });
 
   it('合計13個を超えると追加できない', async () => {
-    // default 8 categories + 5 custom = 13 total → cannot add more
-    const custom = ['A', 'B', 'C', 'D', 'E'];
+    // default 7 categories + 6 custom = 13 total → cannot add more
+    const custom = ['A', 'B', 'C', 'D', 'E', 'F'];
     const settings = makeSettings(custom);
     const repo = makeRepository(settings);
     const useCase = new AddCategoryUseCaseImpl(repo);
