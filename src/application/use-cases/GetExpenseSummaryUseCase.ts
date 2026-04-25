@@ -4,7 +4,8 @@ import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 
 export type GetExpenseSummaryInput = {
-  currentDate?: Date; // For testing purposes, defaults to now
+  currentDate?: Date;
+  monthOffset?: number; // 0=今月, -1=先月
 }
 
 export type GetExpenseSummaryOutput = {
@@ -33,7 +34,8 @@ export class GetExpenseSummaryUseCaseImpl implements GetExpenseSummaryUseCase {
 
     // Calculate period based on start day and current date
     const currentDate = input.currentDate || new Date();
-    const period = Period.calculateForStartDay(startDay, currentDate);
+    const monthOffset = input.monthOffset ?? 0;
+    const period = Period.calculateForStartDay(startDay, currentDate, monthOffset);
 
     // Get expenses within the period
     const expenses = await this.expenseRepository.findByPeriod(period);

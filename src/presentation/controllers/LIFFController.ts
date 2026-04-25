@@ -4,6 +4,7 @@ import { StartDay } from '../../domain/value-objects/Period';
 export interface LIFFRequest {
   method: string;
   body?: any;
+  query?: Record<string, string | string[]>;
 }
 
 export interface LIFFResponse {
@@ -23,8 +24,12 @@ export class LIFFController {
         };
       }
 
-      // Call presenter to get summary
-      const summary = await this.presenter.getSummary();
+      const rawOffset = req.query?.monthOffset;
+      const monthOffset = rawOffset !== undefined
+        ? Math.max(-12, Math.min(0, parseInt(String(rawOffset), 10) || 0))
+        : 0;
+
+      const summary = await this.presenter.getSummary(monthOffset);
 
       return {
         statusCode: 200,

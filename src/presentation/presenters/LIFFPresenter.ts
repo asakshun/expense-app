@@ -33,7 +33,7 @@ export interface CategoryMutationResult {
 }
 
 export interface LIFFPresenter {
-  getSummary(): Promise<SummaryViewModel>;
+  getSummary(monthOffset?: number): Promise<SummaryViewModel>;
   updateSettings(startDay: StartDay, budgetLimit?: number | null): Promise<UpdateResult>;
   getCategories(): Promise<CategoriesViewModel>;
   addCategory(categoryName: string): Promise<CategoryMutationResult>;
@@ -49,9 +49,8 @@ export class LIFFPresenterImpl implements LIFFPresenter {
     private readonly removeCategoryUseCase: RemoveCategoryUseCase
   ) {}
 
-  async getSummary(): Promise<SummaryViewModel> {
-    // Call GetExpenseSummaryUseCase
-    const result = await this.getExpenseSummaryUseCase.execute({});
+  async getSummary(monthOffset: number = 0): Promise<SummaryViewModel> {
+    const result = await this.getExpenseSummaryUseCase.execute({ monthOffset });
 
     // Format amount with comma separator and currency symbol
     const formattedAmount = this.formatAmount(result.totalAmount);
