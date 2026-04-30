@@ -41,6 +41,14 @@ export class Expense {
     return new Expense(this.id, this.amount, this.date, category);
   }
 
+  withAmount(amount: Amount): Expense {
+    return new Expense(this.id, amount, this.date, this.category);
+  }
+
+  withDate(date: ExpenseDate): Expense {
+    return new Expense(this.id, this.amount, date, this.category);
+  }
+
   isInPeriod(period: Period): boolean {
     return period.contains(this.date.getValue());
   }

@@ -1,4 +1,5 @@
 import Script from 'next/script';
+import { LiffProvider } from './context/LiffContext';
 
 export const metadata = {
   title: '支出管理 - LIFF',
@@ -16,7 +17,9 @@ export default function LIFFLayout({
         src="https://static.line-scdn.net/liff/edge/2/sdk.js"
         strategy="beforeInteractive"
       />
-      {children}
+      <LiffProvider>
+        {children}
+      </LiffProvider>
     </>
   );
 }

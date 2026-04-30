@@ -102,6 +102,50 @@ export class NotionExpenseGateway implements ExpenseRepository {
   }
 
   /**
+   * 支出の全フィールドを1回のAPIコールで更新
+   */
+  async update(expense: Expense): Promise<void> {
+    const properties: any = {
+      '金額': {
+        number: expense.getAmount().getValue(),
+      },
+      '日付': {
+        date: {
+          start: this.formatDate(expense.getDate().getValue()),
+        },
+      },
+    };
+
+    const category = expense.getCategory();
+    if (category) {
+      properties['カテゴリ'] = {
+        select: { name: category.getValue() },
+      };
+    } else {
+      properties['カテゴリ'] = { select: null };
+    }
+
+    await this.withRetry(async () => {
+      await this.client.pages.update({
+        page_id: expense.getId(),
+        properties,
+      });
+    });
+  }
+
+  /**
+   * 支出をアーカイブ（論理削除）
+   */
+  async delete(recordId: string): Promise<void> {
+    await this.withRetry(async () => {
+      await this.client.pages.update({
+        page_id: recordId,
+        archived: true,
+      });
+    });
+  }
+
+  /**
    * 支出のカテゴリを更新
    */
   async updateCategory(recordId: string, category: Category): Promise<void> {

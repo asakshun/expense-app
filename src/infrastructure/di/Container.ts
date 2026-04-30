@@ -8,6 +8,8 @@ import { UpdateExpenseCategoryUseCaseImpl } from '../../application/use-cases/Up
 import { GetCategoriesUseCaseImpl } from '../../application/use-cases/GetCategoriesUseCase';
 import { AddCategoryUseCaseImpl } from '../../application/use-cases/AddCategoryUseCase';
 import { RemoveCategoryUseCaseImpl } from '../../application/use-cases/RemoveCategoryUseCase';
+import { UpdateExpenseUseCaseImpl } from '../../application/use-cases/UpdateExpenseUseCase';
+import { DeleteExpenseUseCaseImpl } from '../../application/use-cases/DeleteExpenseUseCase';
 import { WebhookPresenterImpl } from '../../presentation/presenters/WebhookPresenter';
 import { LIFFPresenterImpl } from '../../presentation/presenters/LIFFPresenter';
 import { getNotionConfig } from '../config/NotionConfig';
@@ -58,6 +60,8 @@ export class Container {
   private readonly getCategoriesUseCase: GetCategoriesUseCaseImpl;
   private readonly addCategoryUseCase: AddCategoryUseCaseImpl;
   private readonly removeCategoryUseCase: RemoveCategoryUseCaseImpl;
+  private readonly updateExpenseUseCase: UpdateExpenseUseCaseImpl;
+  private readonly deleteExpenseUseCase: DeleteExpenseUseCaseImpl;
   private readonly webhookPresenter: WebhookPresenterImpl;
   private readonly liffPresenter: LIFFPresenterImpl;
   private readonly lineConfig: LineConfig;
@@ -111,6 +115,14 @@ export class Container {
 
     this.removeCategoryUseCase = new RemoveCategoryUseCaseImpl(
       this.notionSettingsGateway
+    );
+
+    this.updateExpenseUseCase = new UpdateExpenseUseCaseImpl(
+      this.notionExpenseGateway
+    );
+
+    this.deleteExpenseUseCase = new DeleteExpenseUseCaseImpl(
+      this.notionExpenseGateway
     );
 
     // プレゼンターの初期化
@@ -193,6 +205,14 @@ export class Container {
 
   public getLIFFPresenter(): LIFFPresenterImpl {
     return this.liffPresenter;
+  }
+
+  public getUpdateExpenseUseCase(): UpdateExpenseUseCaseImpl {
+    return this.updateExpenseUseCase;
+  }
+
+  public getDeleteExpenseUseCase(): DeleteExpenseUseCaseImpl {
+    return this.deleteExpenseUseCase;
   }
 
   public getLineConfig(): LineConfig {
