@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLiff } from './context/LiffContext';
 
 interface SummaryData {
   totalAmount: string;
@@ -20,11 +22,12 @@ interface CategoriesData {
 const MAX_TOTAL_CATEGORIES = 13;
 
 export default function LIFFPage() {
+  const router = useRouter();
+  const { liffReady, liffError } = useLiff();
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [startDay, setStartDay] = useState<1 | 25>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [liffInitialized, setLiffInitialized] = useState(false);
   const [monthOffset, setMonthOffset] = useState<0 | -1>(0);
   const [categories, setCategories] = useState<CategoriesData>({
     defaultCategories: [],
@@ -36,44 +39,9 @@ export default function LIFFPage() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
-  // Initialize LIFF
   useEffect(() => {
-    const initializeLiff = async () => {
-      try {
-        // Check if LIFF SDK is available
-        if (typeof window !== 'undefined' && (window as any).liff) {
-          const liff = (window as any).liff;
-          
-          // Initialize LIFF with your LIFF ID
-          const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-          if (!liffId) {
-            console.warn('LIFF ID not configured');
-            setLiffInitialized(true);
-            return;
-          }
-
-          await liff.init({ liffId });
-          
-          if (!liff.isLoggedIn()) {
-            liff.login();
-            return;
-          }
-          
-          setLiffInitialized(true);
-        } else {
-          // LIFF SDK not loaded, continue anyway for development
-          console.warn('LIFF SDK not loaded');
-          setLiffInitialized(true);
-        }
-      } catch (err) {
-        console.error('LIFF initialization failed:', err);
-        setError('LIFFの初期化に失敗しました。');
-        setLiffInitialized(true);
-      }
-    };
-
-    initializeLiff();
-  }, []);
+    if (liffError) setError(liffError);
+  }, [liffError]);
 
   const fetchCategories = async () => {
     try {
@@ -89,9 +57,8 @@ export default function LIFFPage() {
     }
   };
 
-  // Fetch summary data
   useEffect(() => {
-    if (!liffInitialized) return;
+    if (!liffReady) return;
 
     const fetchSummary = async () => {
       try {
@@ -101,18 +68,11 @@ export default function LIFFPage() {
         const response = await fetch(`/api/summary${monthOffset !== 0 ? `?monthOffset=${monthOffset}` : ''}`);
 
         if (!response.ok) {
-          // 詳細なエラー情報を取得
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error('API Error:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData
-          });
           throw new Error(`Failed to fetch summary: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
-        console.log('Summary data:', data);
         setSummary(data);
 
         const periodStart = data.periodText.split(' - ')[0];
@@ -128,9 +88,8 @@ export default function LIFFPage() {
 
     fetchSummary();
     fetchCategories();
-  }, [liffInitialized, monthOffset]);
+  }, [liffReady, monthOffset]);
 
-  // Handle start day toggle
   const handleStartDayToggle = async (newStartDay: 1 | 25) => {
     try {
       setLoading(true);
@@ -138,19 +97,14 @@ export default function LIFFPage() {
 
       const response = await fetch('/api/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startDay: newStartDay }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
+      if (!response.ok) throw new Error('Failed to update settings');
 
       setStartDay(newStartDay);
 
-      // Refresh summary
       const summaryResponse = await fetch('/api/summary');
       if (summaryResponse.ok) {
         const data = await summaryResponse.json();
@@ -211,18 +165,20 @@ export default function LIFFPage() {
     }
   };
 
-  const handleRetry = () => {
-    window.location.reload();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-md mx-auto p-6">
         {/* Header */}
-        <div className="text-center mb-8 pt-8">
+        <div className="flex items-center justify-between mb-8 pt-8">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             支出管理
           </h1>
+          <button
+            onClick={() => router.push('/liff/history')}
+            className="text-sm text-blue-600 dark:text-blue-400 font-medium"
+          >
+            支出履歴 ＞
+          </button>
         </div>
 
         {/* Loading State */}
@@ -240,7 +196,7 @@ export default function LIFFPage() {
               {error}
             </p>
             <button
-              onClick={handleRetry}
+              onClick={() => window.location.reload()}
               className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               再試行
@@ -292,7 +248,6 @@ export default function LIFFPage() {
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{summary.budgetLimit}</p>
                 </div>
 
-                {/* Progress Bar */}
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3 overflow-hidden">
                   <div
                     className={`h-3 rounded-full transition-all ${
@@ -375,7 +330,6 @@ export default function LIFFPage() {
                   <p className="text-xs text-red-600 dark:text-red-400 mb-3">{categoryError}</p>
                 )}
 
-                {/* Default categories */}
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">デフォルト</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {categories.defaultCategories.map(cat => (
@@ -388,7 +342,6 @@ export default function LIFFPage() {
                   ))}
                 </div>
 
-                {/* Custom categories */}
                 {categories.customCategories.length > 0 && (
                   <>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">カスタム</p>
@@ -413,7 +366,6 @@ export default function LIFFPage() {
                   </>
                 )}
 
-                {/* Add form */}
                 {categories.allCategories.length < MAX_TOTAL_CATEGORIES ? (
                   <div className="flex gap-2">
                     <input
@@ -444,7 +396,6 @@ export default function LIFFPage() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -7,4 +7,6 @@ export interface ExpenseRepository {
   findByPeriod(period: Period): Promise<Expense[]>;
   updateCategory(recordId: string, category: Category): Promise<void>;
   findById(recordId: string): Promise<Expense | null>;
+  update(expense: Expense): Promise<void>;
+  delete(recordId: string): Promise<void>;
 }
